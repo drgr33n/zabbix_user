@@ -360,7 +360,7 @@ class User(object):
                 self._zapi.user.update(params)
                 self._module.exit_json(
                     changed=True,
-                    result="Successfully updated user '%s'.              cstate: '%s'              nstate: '%s'" % (alias, cstate, nstate)
+                    result="Successfully updated user '%s'." % (alias)
                 )
             else:
                 self._module.exit_json(
