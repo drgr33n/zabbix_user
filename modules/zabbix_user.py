@@ -574,14 +574,6 @@ def main():
     user_type = str(module.params['user_type'])
     validate_certs = module.params['validate_certs']
 
-    # Convert int to str
-    for usrgrp_entry in user_groups:
-        usrgrp_entry['usrgrpid'] = str(usrgrp_entry['usrgrpid'])
-    for medias_entry in user_medias:
-        if 'mediatypeid' in medias_entry:
-            medias_entry['mediatypeid'] = str(medias_entry['mediatypeid'])
-        if 'severity' in medias_entry:
-            medias_entry['severity'] = str(medias_entry['severity'])
     zbx = None
     try:
         zbx = ZabbixAPI(
@@ -604,6 +596,15 @@ def main():
     if state == "absent":
         user.delete_user(alias)
     if state == "present":
+        for usrgrp_entry in user_groups:
+            usrgrp_entry['usrgrpid'] = str(usrgrp_entry['usrgrpid'])
+
+        for medias_entry in user_medias:
+            if 'mediatypeid' in medias_entry:
+                medias_entry['mediatypeid'] = str(medias_entry['mediatypeid'])
+            if 'severity' in medias_entry:
+                medias_entry['severity'] = str(medias_entry['severity'])
+
         if user.check_user_exist(alias):
             user.update_user(
                 alias,
