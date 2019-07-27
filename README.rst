@@ -2,7 +2,9 @@ Ansible Zabbix User Module
 ==========================
 
 This module allows you to create, modify and delete Zabbix users. Password updates are not supported for now.
-This is due to the limitations of using the API. I'm working on this now.
+This is due to the limitations of using the API. I'm working on this.
+
+You can also checkout the HTML docs included for more information.
 
 Requirements
 ------------
@@ -11,6 +13,17 @@ The below requirements are needed on the host that executes this module.
 
 * python >= 2.6
 * zabbix-api >= 0.5.3
+
+Usage
+-----
+
+Clone the project and move the ``modules`` directory into the root of your project. Then run the following export
+so Ansible can see the module.
+
+.. code-block::
+
+    export ANSIBLE_LIBRARY=./modules/
+
 
 Example playbook
 ----------------
