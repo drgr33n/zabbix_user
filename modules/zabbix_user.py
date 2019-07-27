@@ -348,15 +348,11 @@ class User(object):
                 'usrgrps': user_groups,
                 'user_medias': user_medias
             }
-            nstate = params
-            del nstate['passwd']
+            del params['passwd']
             cstate = self._get_user_state(alias, params['user_medias'])
             cstate['user_medias'] = cstate.pop("medias")
-                        
-            #cstate = { k:str(v) for (k,v) in cstate_raw.items()}
-            #nstate = { k:str(v) for (k,v) in nstate_raw.items()}
 
-            if cstate != nstate:
+            if cstate != params:
                 self._zapi.user.update(params)
                 self._module.exit_json(
                     changed=True,
