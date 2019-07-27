@@ -299,6 +299,10 @@ class User(object):
                 'user_medias': user_medias
             }
             self._zapi.user.create(params)
+            self._module.exit_json(
+                changed=True,
+                result="Successfully created user '%s'." % alias
+            )
         except Exception as err:
             self._module.fail_json(
                 msg="Failed create the user '%s'. Msg: %s" % (alias, err)
@@ -313,6 +317,10 @@ class User(object):
                     [
                         str(uid)
                     ]
+                )
+                self._module.exit_json(
+                    changed=True,
+                    result="Successfully deleted user '%s'." % alias
                 )
             else:
                 self._module.fail_json(
@@ -593,10 +601,6 @@ def main():
     
     if state == "absent":
         user.delete_user(alias)
-        module.exit_json(
-            changed=True,
-            result="Successfully deleted user '%s'." % alias
-        )
     if state == "present":
         if user.check_user_exist(alias):
             user.update_user(
@@ -615,10 +619,6 @@ def main():
                 user_theme,
                 user_type
             )
-            module.exit_json(
-                changed=True,
-                result="Successfully updated user '%s'." % alias
-            )
         else:
             user.create_user(
                 alias,
@@ -635,10 +635,6 @@ def main():
                 user_surname,
                 user_theme,
                 user_type
-            )
-            module.exit_json(
-                changed=True,
-                result="Successfully created user '%s'." % alias
             )
 if __name__ == '__main__':
     main()
