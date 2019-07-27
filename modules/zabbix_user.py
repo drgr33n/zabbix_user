@@ -202,6 +202,7 @@ class User(object):
         self._module = module
         self._zapi = zbx
 
+
     def check_user_exist(self, alias):
         try:
             result = self._zapi.user.get(
@@ -239,7 +240,8 @@ class User(object):
             )
 
 
-    def _get_user_state(self, alias):
+    def _get_user_state(self, alias, medias):
+        media_keys = list(medias[0].keys())
         try:
             result = self._zapi.user.get(
                 {
@@ -258,13 +260,7 @@ class User(object):
                         "type"
                     ],
                     "selectUsrgrps": "usrgrpid",
-                    "selectMedias": [
-                        "mediatypeid",
-                        "sendto",
-                        "active",
-                        "severity",
-                        "period"
-                    ],
+                    "selectMedias": media_keys,
                     "userids": self._get_user_id(alias)
                 }
             )
@@ -276,9 +272,8 @@ class User(object):
 
 
     def create_user(self, alias, autologin, autologout, lang, redirect_url, refresh,
-                    rows_per_page, user_groups, user_medias,
-                    user_name, user_password, user_surname, user_theme,
-                    user_type):
+                    rows_per_page, user_groups, user_medias, user_name, user_password, 
+                    user_surname, user_theme, user_type):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -333,9 +328,8 @@ class User(object):
 
 
     def update_user(self, alias, autologin, autologout, lang, redirect_url, refresh,
-                    rows_per_page, user_groups, user_medias,
-                    user_name, user_password, user_surname, user_theme,
-                    user_type):
+                    rows_per_page, user_groups, user_medias, user_name, user_password,
+                    user_surname, user_theme, user_type):
         try:
             params = {
                 'userid': self._get_user_id(alias),
@@ -354,20 +348,24 @@ class User(object):
                 'usrgrps': user_groups,
                 'user_medias': user_medias
             }
-            cstate_raw = self._get_user_state(alias)
-            cstate = { k:str(v) for (k,v) in cstate_raw.items()}
-            nstate = { k:str(v) for (k,v) in params.items()}
+            nstate = params
+            del nstate['passwd']
+            cstate = self._get_user_state(alias, params['user_medias'])
+            cstate['user_medias'] = cstate.pop("medias")
+                        
+            #cstate = { k:str(v) for (k,v) in cstate_raw.items()}
+            #nstate = { k:str(v) for (k,v) in nstate_raw.items()}
 
-            if cstate == nstate:
+            if cstate != nstate:
                 self._zapi.user.update(params)
                 self._module.exit_json(
                     changed=True,
-                    result="Successfully updated user '%s'." % alias
+                    result="Successfully updated user '%s'.              cstate: '%s'              nstate: '%s'" % (alias, cstate, nstate)
                 )
             else:
                 self._module.exit_json(
                     changed=False,
-                    result="Successfully updated user '%s'." % alias
+                    result="No changes to the user '%s' required." % alias
                 )
         except Exception as err:
             self._module.fail_json(
@@ -499,7 +497,7 @@ def main():
                         required=False
                     ),
                     mediatypeid=dict(
-                        type='str',
+                        type='int',
                         required=True
                     ),
                     period=dict(
@@ -512,9 +510,9 @@ def main():
                         required=True,
                     ),
                     severity=dict(
-                        type='int',
+                        type='str',
                         required=False,
-                        default=63
+                        default="63"
                     )
                 )
             ),
@@ -555,9 +553,9 @@ def main():
     timeout = module.params['timeout']
     alias = module.params['alias']
     if module.params['autologin'] is False:
-        autologin = 0
+        autologin = "0"
     else:
-        autologin = 1
+        autologin = "1"
     autologout = module.params['autologout']
     http_login_password = module.params['http_login_password']
     http_login_user = module.params['http_login_user']
@@ -567,19 +565,27 @@ def main():
     module.params['redirect_url']
     redirect_url = module.params['redirect_url']
     refresh = module.params['refresh']
-    rows_per_page = module.params['rows_per_page']
+    rows_per_page = str(module.params['rows_per_page'])
     server_url = module.params['server_url']
     state = module.params['state']
     timeout = module.params['timeout']
     user_groups = module.params['user_groups']
-    user_medias = module.params['user_medias']
+    user_medias = module.params.get('user_medias')
     user_name = module.params['user_name']
     user_password = module.params['user_password']
     user_surname = module.params['user_surname']
     user_theme = module.params['user_theme']
-    user_type = module.params['user_type']
+    user_type = str(module.params['user_type'])
     validate_certs = module.params['validate_certs']
 
+    # Convert int to str
+    for usrgrp_entry in user_groups:
+        usrgrp_entry['usrgrpid'] = str(usrgrp_entry['usrgrpid'])
+    for medias_entry in user_medias:
+        if 'mediatypeid' in medias_entry:
+            medias_entry['mediatypeid'] = str(medias_entry['mediatypeid'])
+        if 'severity' in medias_entry:
+            medias_entry['severity'] = str(medias_entry['severity'])
     zbx = None
     try:
         zbx = ZabbixAPI(
